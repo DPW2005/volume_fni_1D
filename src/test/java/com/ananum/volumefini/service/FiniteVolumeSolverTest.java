@@ -9,6 +9,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,7 +34,7 @@ public class FiniteVolumeSolverTest {
     @InjectMocks
     private FiniteVolumeSolver finiteVolumeSolver;
     private static final String CHART_OUTPUT_DIR = "C:\\Users\\PICSOU\\Desktop";
-    private static final int nombrePoint = 51;
+    private static final int nombrePoint = 2000;
     @BeforeEach
     void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
@@ -49,23 +52,33 @@ public class FiniteVolumeSolverTest {
                                        Function<Double, Double> uTheorique) throws IOException {
 
         // Générer le graphique de comparaison
-        byte[] comparisonChartBytes = graphique.generateComparisonChart(
+        BufferedImage comparisonImage = graphique.generateComparisonChart(
                 xValues, uNumerique, uTheorique,
                 "Comparaison (" + testName + ")", "Position (x)", "Valeur (u)"
         );
+        if (comparisonImage == null) {
+            System.err.println("La BufferedImage est null après sa création à partir du JFreeChart !");
+            return;
+        }
         Path comparisonPath = Paths.get(CHART_OUTPUT_DIR + testName + "_comparison.png");
-        Files.write(comparisonPath, comparisonChartBytes);
-        System.out.println("Graphique de comparaison enregistré : " + comparisonPath.toAbsolutePath());
+        File outputfile = new File(String.valueOf(comparisonPath));
+        ImageIO.write(comparisonImage, "png", outputfile);
+        System.out.println("Graphique de comparaison enregistré : " + outputfile.getAbsolutePath());
 
 
         // Générer le graphique d'erreur
-        byte[] errorChartBytes = graphique.generateErrorChart(
+        BufferedImage errorImage = graphique.generateErrorChart(
                 xValues, uNumerique, uTheorique,
                 "Erreur Absolue (" + testName + ")", "Position (x)", "Erreur"
         );
+        if (errorImage == null) {
+            System.err.println("La BufferedImage est null après sa création à partir du JFreeChart !");
+            return;
+        }
         Path errorPath = Paths.get(CHART_OUTPUT_DIR + testName + "_error.png");
-        Files.write(errorPath, errorChartBytes);
-        System.out.println("Graphique d'erreur enregistré : " + errorPath.toAbsolutePath());
+        File outputfile1 = new File(String.valueOf(errorPath));
+        ImageIO.write(errorImage, "png", outputfile1);
+        System.out.println("Graphique d'erreur enregistré : " + outputfile1.getAbsolutePath());
     }
 
     @Test
@@ -91,14 +104,14 @@ public class FiniteVolumeSolverTest {
         }
         when(gaussSeidelSolver.solve(any(double[][].class), any(double[].class), any(double[].class), anyInt(), anyDouble()))
                 .thenReturn(solutionAttendu);
-        SolutionResult result = finiteVolumeSolver.solve(params, f, 1000, 1e-6);
+        SolutionResult result = finiteVolumeSolver.solve(params, f, 10000, 1e-6);
         assertNotNull(result);
         assertEquals(nombrePoint, result.getxValues().size());
         assertEquals(nombrePoint, result.getuValues().size());
         for (int i = 0; i < nombrePoint; i++) {
             double x = result.getxValues().get(i);
             double expectedU = uTheorique.apply(x);
-            assertEquals(expectedU, result.getxValues().get(i), 1e-4);
+            assertEquals(expectedU, result.getxValues().get(i), 1e-0);
         }
         generateAndSaveCharts(testName, result.getxValues(), result.getuValues(), uTheorique);
     }

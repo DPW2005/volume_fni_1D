@@ -14,6 +14,10 @@ import com.ananum.volumefini.model.EquationParameters;
 import com.ananum.volumefini.model.SolutionResult;
 import com.ananum.volumefini.service.FiniteVolumeSolver;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.function.Function;
 
 @RestController
@@ -64,7 +68,7 @@ public class EquationSolverController {
 
             SolutionResult result = solver.solve(params, f, maxIterations, tolerance);
 
-            byte[] imageBytes = graphique.generateComparisonChart(
+            BufferedImage image = graphique.generateComparisonChart(
                     result.getxValues(),
                     result.getuValues(),
                     uTheorique,
@@ -72,9 +76,12 @@ public class EquationSolverController {
                     "Position (x)",
                     "Valeur (u)"
             );
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", baos);
+            byte[] imageBytes = baos.toByteArray();
             return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(imageBytes);
 
-        } catch (IllegalArgumentException | ArithmeticException e) {
+        } catch (IllegalArgumentException | ArithmeticException | IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
@@ -91,7 +98,7 @@ public class EquationSolverController {
 
             SolutionResult result = solver.solve(params, f, maxIterations, tolerance);
 
-            byte[] imageBytes = graphique.generateErrorChart(
+            BufferedImage image = graphique.generateErrorChart(
                     result.getxValues(),
                     result.getuValues(),
                     uTheorique,
@@ -99,9 +106,12 @@ public class EquationSolverController {
                     "Position (x)",
                     "Erreur"
             );
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", baos);
+            byte[] imageBytes = baos.toByteArray();
             return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(imageBytes);
 
-        } catch (IllegalArgumentException | ArithmeticException e) {
+        } catch (IllegalArgumentException | ArithmeticException | IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }

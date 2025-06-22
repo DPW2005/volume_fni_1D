@@ -1,17 +1,24 @@
 package com.ananum.volumefini.service;
 
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtils;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
 
 @Service
 public class Graphique {
 
-    public byte[] generateComparisonChart(List<Double> xValues, List<Double> fonctionNumerique,
-                                          Function<Double, Double> fonctionTheorique,
-                                          String title, String xAxisLabel, String yAxisLabel) throws IOException {
+    public BufferedImage generateComparisonChart(List<Double> xValues, List<Double> fonctionNumerique,
+                                                 Function<Double, Double> fonctionTheorique,
+                                                 String title, String xAxisLabel, String yAxisLabel) throws IOException {
 
         XYSeries numericSeries = new XYSeries("Solution Numérique");
         XYSeries theoreticalSeries = new XYSeries("Solution Théorique");
@@ -32,16 +39,17 @@ public class Graphique {
                 yAxisLabel,
                 dataset,
                 PlotOrientation.VERTICAL,
-                true, // include legend
-                true, // tooltips
-                false // urls
+                true,
+                true,
+                false
         );
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ChartUtils.writeChartAsPNG(baos, chart, 800, 600); // Génère l'image PNG de 800x600 pixels
-        return baos.toByteArray();
+        if (chart == null) {
+            System.err.println("L'objet JFreeChart est null après sa création !");
+            return null;
+        }
+        return chart.createBufferedImage(800,600);
     }
-    public byte[] generateErrorChart(List<Double> xValues, List<Double> fonctionNumerique,
+    public BufferedImage generateErrorChart(List<Double> xValues, List<Double> fonctionNumerique,
                                      Function<Double, Double> fonctionTheorique,
                                      String title, String xAxisLabel, String yAxisLabel) throws IOException {
 
@@ -67,9 +75,10 @@ public class Graphique {
                 true, // tooltips
                 false // urls
         );
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ChartUtils.writeChartAsPNG(baos, chart, 800, 600);
-        return baos.toByteArray();
+        if (chart == null) {
+            System.err.println("L'objet JFreeChart est null après sa création !");
+            return null;
+        }
+        return chart.createBufferedImage(800,600);
     }
 }
