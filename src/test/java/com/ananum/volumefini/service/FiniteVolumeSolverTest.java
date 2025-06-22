@@ -60,7 +60,7 @@ public class FiniteVolumeSolverTest {
                 xValues, uNumerique, uTheorique,
                 "Comparaison (" + testName + ")", "Position (x)", "Valeur (u)"
         );
-        SwingUtilities.invokeLater(() -> {
+        /*SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Graphique JFreeChart via Spring Boot");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(800, 600);
@@ -92,7 +92,7 @@ public class FiniteVolumeSolverTest {
 
             frame.pack();
             frame.setVisible(true);
-        });
+        });*/
         // Générer le graphique d'erreur
         JFreeChart error = graphique.generateErrorChart(
                 xValues, uNumerique, uTheorique,
