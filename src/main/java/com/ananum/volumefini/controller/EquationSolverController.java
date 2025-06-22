@@ -55,7 +55,7 @@ public class EquationSolverController {
             return ResponseEntity.badRequest().body(null); // Ou un objet d'erreur plus détaillé
         }
     }
-
+/*
     @PostMapping(value = "/plot/solution", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> getSolutionPlot(@RequestBody EquationParameters params) {
         try {
@@ -114,6 +114,6 @@ public class EquationSolverController {
         } catch (IllegalArgumentException | ArithmeticException | IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-    }
+    }*/
 }
 

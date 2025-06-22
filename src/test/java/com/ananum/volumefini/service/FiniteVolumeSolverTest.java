@@ -3,18 +3,22 @@ package com.ananum.volumefini.service;
 
 import com.ananum.volumefini.model.EquationParameters;
 import com.ananum.volumefini.model.SolutionResult;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
+import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.function.Function;
@@ -52,33 +56,51 @@ public class FiniteVolumeSolverTest {
                                        Function<Double, Double> uTheorique) throws IOException {
 
         // Générer le graphique de comparaison
-        BufferedImage comparisonImage = graphique.generateComparisonChart(
+        JFreeChart comparison = graphique.generateComparisonChart(
                 xValues, uNumerique, uTheorique,
                 "Comparaison (" + testName + ")", "Position (x)", "Valeur (u)"
         );
-        if (comparisonImage == null) {
-            System.err.println("La BufferedImage est null après sa création à partir du JFreeChart !");
-            return;
-        }
-        Path comparisonPath = Paths.get(CHART_OUTPUT_DIR + testName + "_comparison.png");
-        File outputfile = new File(String.valueOf(comparisonPath));
-        ImageIO.write(comparisonImage, "png", outputfile);
-        System.out.println("Graphique de comparaison enregistré : " + outputfile.getAbsolutePath());
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Graphique JFreeChart via Spring Boot");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(800, 600);
+            frame.setLocationRelativeTo(null);
 
+            // Créer le jeu de données et le graphique (peut être délégué à un service Spring)
+            XYSeriesCollection dataset = new XYSeriesCollection();
+            XYSeries series1 = new XYSeries("Valeurs A");
+            series1.add(1.0, 10.0);
+            series1.add(2.0, 20.0);
+            dataset.addSeries(series1);
 
+            JFreeChart chart = ChartFactory.createXYLineChart(
+                    "Mon Graphique Spring Boot",
+                    "Axe des X",
+                    "Axe des Y",
+                    dataset,
+                    PlotOrientation.VERTICAL,
+                    true, true, false
+            );
+
+            // Créer le ChartPanel
+            ChartPanel chartPanel = new ChartPanel(chart);
+            chartPanel.setPreferredSize(new Dimension(700, 500));
+            chartPanel.setMouseWheelEnabled(true);
+
+            // Ajouter le ChartPanel au JFrame
+            frame.add(chartPanel, BorderLayout.CENTER);
+
+            frame.pack();
+            frame.setVisible(true);
+        });
         // Générer le graphique d'erreur
-        BufferedImage errorImage = graphique.generateErrorChart(
+        JFreeChart error = graphique.generateErrorChart(
                 xValues, uNumerique, uTheorique,
                 "Erreur Absolue (" + testName + ")", "Position (x)", "Erreur"
         );
-        if (errorImage == null) {
-            System.err.println("La BufferedImage est null après sa création à partir du JFreeChart !");
-            return;
+        if(comparison != null && error != null) {
+            System.out.println("Okay reception des JFreeChart");
         }
-        Path errorPath = Paths.get(CHART_OUTPUT_DIR + testName + "_error.png");
-        File outputfile1 = new File(String.valueOf(errorPath));
-        ImageIO.write(errorImage, "png", outputfile1);
-        System.out.println("Graphique d'erreur enregistré : " + outputfile1.getAbsolutePath());
     }
 
     @Test

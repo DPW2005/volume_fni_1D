@@ -1,7 +1,6 @@
 package com.ananum.volumefini.service;
 
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.XYSeries;
@@ -16,7 +15,7 @@ import java.util.function.Function;
 @Service
 public class Graphique {
 
-    public BufferedImage generateComparisonChart(List<Double> xValues, List<Double> fonctionNumerique,
+    public JFreeChart generateComparisonChart(List<Double> xValues, List<Double> fonctionNumerique,
                                                  Function<Double, Double> fonctionTheorique,
                                                  String title, String xAxisLabel, String yAxisLabel) throws IOException {
 
@@ -43,13 +42,9 @@ public class Graphique {
                 true,
                 false
         );
-        if (chart == null) {
-            System.err.println("L'objet JFreeChart est null après sa création !");
-            return null;
-        }
-        return chart.createBufferedImage(800,600);
+        return chart;
     }
-    public BufferedImage generateErrorChart(List<Double> xValues, List<Double> fonctionNumerique,
+    public JFreeChart generateErrorChart(List<Double> xValues, List<Double> fonctionNumerique,
                                      Function<Double, Double> fonctionTheorique,
                                      String title, String xAxisLabel, String yAxisLabel) throws IOException {
 
@@ -75,10 +70,6 @@ public class Graphique {
                 true, // tooltips
                 false // urls
         );
-        if (chart == null) {
-            System.err.println("L'objet JFreeChart est null après sa création !");
-            return null;
-        }
-        return chart.createBufferedImage(800,600);
+        return chart;
     }
 }
