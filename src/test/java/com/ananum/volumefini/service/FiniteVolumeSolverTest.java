@@ -1,111 +1,211 @@
+// src/test/java/com/votrepackage/volumesfinis/service/FiniteVolumeSolverTest.java
 package com.ananum.volumefini.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.when;
-
-import java.util.function.Function;
-
+import com.ananum.volumefini.model.EquationParameters;
+import com.ananum.volumefini.model.SolutionResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.ananum.volumefini.model.EquationParameters;
-import com.ananum.volumefini.model.SolutionResult;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.function.Function;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.Mockito.when;
 
 public class FiniteVolumeSolverTest {
 
-	@Mock
-    private GaussSeidelSolver gaussSeidelSolver; // On mocke le solveur Gauss-Seidel pour tester FVSolvers isolément
-
+    @Mock
+    private GaussSeidelSolver gaussSeidelSolver;
+    @Mock
+    private Graphique graphique;
     @InjectMocks
     private FiniteVolumeSolver finiteVolumeSolver;
-
+    private static final String CHART_OUTPUT_DIR = "C:\\Users\\PICSOU\\Desktop";
+    private static final int nombrePoint = 51;
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
-    }
-
-    @Test
-    void testSolveForLinearSolution() {
-        // Test case: u'' = 0 => u(x) = C1*x + C2
-        // Let's set u(0) = 0 and u(1) = 1. Then u(x) = x.
-        // Equation: 0*u'' + 0*u' + 0*u = 0  => a=0, b=0, c=0, f(x)=0
-        // Parameters:
-        double a = 0.0;
-        double b = 0.0;
-        double c = 0.0;
-        double xMin = 0.0;
-        double xMax = 1.0;
-        int numPoints = 11; // 11 points means 9 internal points, N=11 for the model
-        double uBoundaryLeft = 0.0;
-        double uBoundaryRight = 1.0;
-
-        EquationParameters params = new EquationParameters(a, b, c, xMin, xMax, numPoints, uBoundaryLeft, uBoundaryRight);
-        Function<Double, Double> f = x -> 0.0; // f(x) = 0
-
-        // Mock Gauss-Seidel to return the known exact solution for the internal points
-        // For u(x) = x, if N=11, then u_0=0, u_1=0.1, u_2=0.2, ..., u_9=0.9, u_10=1.0
-        // Internal points are u_1 to u_9.
-        double[] expectedInternalSolution = new double[numPoints - 2];
-        for (int i = 0; i < numPoints - 2; i++) {
-            expectedInternalSolution[i] = xMin + (i + 1) * (xMax - xMin) / (numPoints - 1);
-        }
+        Files.createDirectories(Paths.get(CHART_OUTPUT_DIR));
         when(gaussSeidelSolver.solve(any(double[][].class), any(double[].class), any(double[].class), anyInt(), anyDouble()))
-                .thenReturn(expectedInternalSolution);
+                .thenAnswer(invocation -> {
+                    double[] b_arg = invocation.getArgument(1);
+                    double[] internalSolution = new double[b_arg.length];
+                    return internalSolution;
+                });
+    }
 
-        SolutionResult result = finiteVolumeSolver.solve(params, f, 100, 1e-6);
+    private void generateAndSaveCharts(String testName, List<Double> xValues,
+                                       List<Double> uNumerique,
+                                       Function<Double, Double> uTheorique) throws IOException {
 
-        assertNotNull(result);
-        assertEquals(numPoints, result.getuValues().size());
-        assertEquals(numPoints, result.getuValues().size());
+        // Générer le graphique de comparaison
+        byte[] comparisonChartBytes = graphique.generateComparisonChart(
+                xValues, uNumerique, uTheorique,
+                "Comparaison (" + testName + ")", "Position (x)", "Valeur (u)"
+        );
+        Path comparisonPath = Paths.get(CHART_OUTPUT_DIR + testName + "_comparison.png");
+        Files.write(comparisonPath, comparisonChartBytes);
+        System.out.println("Graphique de comparaison enregistré : " + comparisonPath.toAbsolutePath());
 
-        // Check if the solution matches u(x) = x
-        for (int i = 0; i < numPoints; i++) {
-            double expectedU = result.getuValues().get(i);
-            assertEquals(expectedU, result.getuValues().get(i), 1e-6);
-        }
+
+        // Générer le graphique d'erreur
+        byte[] errorChartBytes = graphique.generateErrorChart(
+                xValues, uNumerique, uTheorique,
+                "Erreur Absolue (" + testName + ")", "Position (x)", "Erreur"
+        );
+        Path errorPath = Paths.get(CHART_OUTPUT_DIR + testName + "_error.png");
+        Files.write(errorPath, errorChartBytes);
+        System.out.println("Graphique d'erreur enregistré : " + errorPath.toAbsolutePath());
     }
 
     @Test
-    void testSolveWithNonZeroFAndCoefficients() {
-        // Test case for u'' - u = -2, u(0)=1, u(1)=1. Solution: u(x) = 1 (constant)
-        // a=1, b=0, c=-1, f(x)=-2
+    void testTheoreticalSolutionSineX() throws IOException {
+        String testName = "Sin(X)";
+        // Equation: u'' + u = 0, u(0)=0, u(PI/2)=1
+        // Analytical solution: u(x) = sin(x)
         double a = 1.0;
         double b = 0.0;
-        double c = -1.0;
+        double c = 1.0;
         double xMin = 0.0;
-        double xMax = 1.0;
-        int numPoints = 11;
-        double uBoundaryLeft = 1.0;
-        double uBoundaryRight = 1.0;
-
-        EquationParameters params = new EquationParameters(a, b, c, xMin, xMax, numPoints, uBoundaryLeft, uBoundaryRight);
-        Function<Double, Double> f = x -> -2.0;
-
-        double[] expectedInternalSolution = new double[numPoints - 2];
-        for (int i = 0; i < numPoints - 2; i++) {
-            expectedInternalSolution[i] = 1.0; // Expected solution is u(x)=1
+        double xMax = Math.PI / 2.0;
+        double limiteGauche = 0.0; // sin(0) = 0
+        double limiteDroite = 1.0; // sin(PI/2) = 1
+        EquationParameters params = new EquationParameters(a, b, c, xMin, xMax, nombrePoint, limiteGauche, limiteDroite);
+        Function<Double, Double> f = x -> 0.0;
+        Function<Double, Double> uTheorique = Math::sin;
+        double h = (xMax - xMin) / (nombrePoint - 1);
+        double[] solutionAttendu = new double[nombrePoint - 2];
+        for (int i = 0; i < nombrePoint - 2; i++) {
+            double x_i = xMin + (i + 1) * h;
+            solutionAttendu[i] = uTheorique.apply(x_i);
         }
         when(gaussSeidelSolver.solve(any(double[][].class), any(double[].class), any(double[].class), anyInt(), anyDouble()))
-                .thenReturn(expectedInternalSolution);
-
-        SolutionResult result = finiteVolumeSolver.solve(params, f, 100, 1e-6);
-
+                .thenReturn(solutionAttendu);
+        SolutionResult result = finiteVolumeSolver.solve(params, f, 1000, 1e-6);
         assertNotNull(result);
-        assertEquals(numPoints, result.getuValues().size());
-        assertEquals(numPoints, result.getuValues().size());
-
-        // Check if the solution matches u(x) = 1
-        for (int i = 0; i < numPoints; i++) {
-            assertEquals(1.0, result.getuValues().get(i), 1e-6);
+        assertEquals(nombrePoint, result.getxValues().size());
+        assertEquals(nombrePoint, result.getuValues().size());
+        for (int i = 0; i < nombrePoint; i++) {
+            double x = result.getxValues().get(i);
+            double expectedU = uTheorique.apply(x);
+            assertEquals(expectedU, result.getxValues().get(i), 1e-4);
         }
+        generateAndSaveCharts(testName, result.getxValues(), result.getuValues(), uTheorique);
+    }
+
+    @Test
+    void testTheoreticalSolutionXCubed() throws IOException {
+        String testName = "XCubed";
+        // Equation: u'' + u' + u = x^3 + 3x^2 + 6x, u(0)=0, u(1)=1
+        // Analytical solution: u(x) = x^3
+        double a = 1.0;
+        double b = 1.0;
+        double c = 1.0;
+        double xMin = 0.0;
+        double xMax = 1.0;
+        double limiteGauche = 0.0;
+        double limiteDroite = 1.0;
+        EquationParameters params = new EquationParameters(a, b, c, xMin, xMax, nombrePoint, limiteGauche, limiteDroite);
+        Function<Double, Double> f = x -> x*x*x + 3*x*x + 6*x;
+        Function<Double, Double> uTheorique = x -> x*x*x;
+        double h = (xMax - xMin) / (nombrePoint - 1);
+        double[] solutionAttendu = new double[nombrePoint - 2];
+        for (int i = 0; i < nombrePoint - 2; i++) {
+            double x_i = xMin + (i + 1) * h;
+            solutionAttendu[i] = uTheorique.apply(x_i);
+        }
+        when(gaussSeidelSolver.solve(any(double[][].class), any(double[].class), any(double[].class), anyInt(), anyDouble()))
+                .thenReturn(solutionAttendu);
+        SolutionResult result = finiteVolumeSolver.solve(params, f, 1000, 1e-6);
+        assertNotNull(result);
+        assertEquals(nombrePoint, result.getxValues().size());
+        assertEquals(nombrePoint, result.getuValues().size());
+        for (int i = 0; i < nombrePoint; i++) {
+            double x = result.getxValues().get(i);
+            double expectedU = uTheorique.apply(x);
+            assertEquals(expectedU, result.getuValues().get(i), 1e-6);
+        }
+        generateAndSaveCharts(testName, result.getuValues(), result.getuValues(), uTheorique);
+    }
+
+    @Test
+    void testTheoreticalSolutionXSquared() throws IOException {
+        String testName = "X^2";
+        // Equation: u'' + u' + u = x^2 + 2x + 2, u(0)=0, u(1)=1
+        // Analytical solution: u(x) = x^2
+        double a = 1.0;
+        double b = 1.0;
+        double c = 1.0;
+        double xMin = 0.0;
+        double xMax = 1.0;
+        double limiteGauche = 0.0;
+        double limiteDroite = 1.0;
+        EquationParameters params = new EquationParameters(a, b, c, xMin, xMax, nombrePoint, limiteGauche, limiteDroite);
+        Function<Double, Double> f = x -> x*x + 2*x + 2;
+        Function<Double, Double> uTheorique = x -> x*x;
+        double h = (xMax - xMin) / (nombrePoint - 1);
+        double[] solutionAttendu = new double[nombrePoint - 2];
+        for (int i = 0; i < nombrePoint - 2; i++) {
+            double x_i = xMin + (i + 1) * h;
+            solutionAttendu[i] = uTheorique.apply(x_i);
+        }
+        when(gaussSeidelSolver.solve(any(double[][].class), any(double[].class), any(double[].class), anyInt(), anyDouble()))
+                .thenReturn(solutionAttendu);
+        SolutionResult result = finiteVolumeSolver.solve(params, f, 1000, 1e-6);
+        assertNotNull(result);
+        assertEquals(nombrePoint, result.getxValues().size());
+        assertEquals(nombrePoint, result.getuValues().size());
+        for (int i = 0; i < nombrePoint; i++) {
+            double x = result.getxValues().get(i);
+            double expectedU = uTheorique.apply(x);
+            assertEquals(expectedU, result.getuValues().get(i), 1e-6);
+        }
+        generateAndSaveCharts(testName, result.getxValues(), result.getuValues(), uTheorique);
+    }
+
+    @Test
+    void testTheoreticalSolutionZero() throws IOException {
+        String testName = "O";
+        // Equation: u'' + u' + u = 0, u(0)=0, u(1)=0
+        // Analytical solution: u(x) = 0
+        double a = 1.0;
+        double b = 1.0;
+        double c = 1.0;
+        double xMin = 0.0;
+        double xMax = 1.0;
+        double limiteGauche = 0.0;
+        double limiteDroite = 0.0;
+        EquationParameters params = new EquationParameters(a, b, c, xMin, xMax, nombrePoint, limiteGauche, limiteDroite);
+        Function<Double, Double> f = x -> 0.0;
+        Function<Double, Double> uTheorique = x -> 0.0;
+        double h = (xMax - xMin) / (nombrePoint - 1);
+        double[] solutionAttendu = new double[nombrePoint - 2];
+        for (int i = 0; i < nombrePoint - 2; i++) {
+            double x_i = xMin + (i + 1) * h;
+            solutionAttendu[i] = uTheorique.apply(x_i);
+        }
+        when(gaussSeidelSolver.solve(any(double[][].class), any(double[].class), any(double[].class), anyInt(), anyDouble()))
+                .thenReturn(solutionAttendu);
+        SolutionResult result = finiteVolumeSolver.solve(params, f, 1000, 1e-6);
+        assertNotNull(result);
+        assertEquals(nombrePoint, result.getxValues().size());
+        assertEquals(nombrePoint, result.getuValues().size());
+        for (int i = 0; i < nombrePoint; i++) {
+            double x = result.getxValues().get(i);
+            double expectedU = uTheorique.apply(x);
+            assertEquals(expectedU, result.getuValues().get(i), 1e-6);
+        }
+        generateAndSaveCharts(testName, result.getxValues(), result.getuValues(), uTheorique);
     }
 
     @Test
@@ -117,5 +217,4 @@ public class FiniteVolumeSolverTest {
             finiteVolumeSolver.solve(params, f, 100, 1e-6);
         });
     }
-
 }

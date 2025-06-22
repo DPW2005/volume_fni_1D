@@ -4,13 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.annotation.Testable;
 
-@Testable
+
 public class GaussSeidelSolverTest {
 
 	private GaussSeidelSolver gaussSeidelSolver;
@@ -19,11 +17,6 @@ public class GaussSeidelSolverTest {
     void setUp() {
         gaussSeidelSolver = new GaussSeidelSolver();
     }
-
-    @Test
-	void test() {
-		fail("Not yet implemented");
-	}
     
     @Test
     void testSolveSimpleSystem() {
