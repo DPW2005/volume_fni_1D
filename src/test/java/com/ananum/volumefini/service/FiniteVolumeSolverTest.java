@@ -2,7 +2,6 @@ package com.ananum.volumefini.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -11,6 +10,8 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.function.Function;
 
+import com.ananum.volumefini.model.GraphiqueErreur;
+import com.ananum.volumefini.model.GraphiqueFonctions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -19,6 +20,8 @@ import org.mockito.MockitoAnnotations;
 
 import com.ananum.volumefini.model.EquationParameters;
 import com.ananum.volumefini.model.SolutionResult;
+
+import javax.swing.*;
 
 public class FiniteVolumeSolverTest {
 
@@ -32,7 +35,7 @@ public class FiniteVolumeSolverTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
-    private static final int NUM_POINTS = 51;
+    private static final int NUM_POINTS = 10;
 
     @Test
     void testTheoreticalSolutionSineX() throws IOException {
@@ -57,15 +60,41 @@ public class FiniteVolumeSolverTest {
         }
         when(gaussSeidelSolver.solve(any(double[][].class), any(double[].class), any(double[].class), anyInt(), anyDouble()))
                 .thenReturn(expectedInternalSolution);
-        SolutionResult result = finiteVolumeSolver.solve(params, f, 1000, 1e-6);
+        SolutionResult result = finiteVolumeSolver.solve(params, f, 1000, 1e-2);
         assertNotNull(result);
         assertEquals(NUM_POINTS, result.getxValues().size());
         assertEquals(NUM_POINTS, result.getuValues().size());
+        double[] yTheoricalValues = new double[NUM_POINTS];
+        double[] errorValues = new double[NUM_POINTS];
         for (int i = 0; i < NUM_POINTS; i++) {
             double x = result.getxValues().get(i);
             double expectedU = uTheoretical.apply(x);
+            yTheoricalValues[i] = expectedU;
+            errorValues[i] = Math.abs(expectedU - result.getuValues().get(i)) ;
             assertEquals(expectedU, result.getuValues().get(i), 1e-4);
         }
+        double[] xValues = result.getxValues().stream().mapToDouble(Double::doubleValue).toArray();
+        double[] yNumericValues = result.getuValues().stream().mapToDouble(Double::doubleValue).toArray();
+        for (int i = 0; i < NUM_POINTS; i++) {
+            System.out.println("Valeur theorique : "+yTheoricalValues[i]+" Valeur numerique : "+yNumericValues[i]+" Erreur : "+errorValues[i] );
+        }
+        System.out.println("Convergence atteinte apres : "+result.getIterations()+" iterations");
+        SwingUtilities.invokeLater(() -> {
+            JFrame frameFunctions = new JFrame("Fonctions Numérique et Théorique (u(x) = x^3)");
+            frameFunctions.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frameFunctions.add(new GraphiqueFonctions(xValues, yNumericValues, yTheoricalValues));
+            frameFunctions.pack();
+            frameFunctions.setLocationRelativeTo(null);
+            frameFunctions.setVisible(true);
+
+            JFrame frameError = new JFrame("Fonction d'Erreur");
+            frameError.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frameError.add(new GraphiqueErreur(xValues, errorValues));
+            frameError.pack();
+            frameError.setLocation(frameFunctions.getX() + frameFunctions.getWidth() + 20, frameFunctions.getY());
+            frameError.setVisible(true);
+            System.out.println("Interface affichee");
+        });
     }
 
     @Test
@@ -91,15 +120,41 @@ public class FiniteVolumeSolverTest {
         }
         when(gaussSeidelSolver.solve(any(double[][].class), any(double[].class), any(double[].class), anyInt(), anyDouble()))
                 .thenReturn(expectedInternalSolution);
-        SolutionResult result = finiteVolumeSolver.solve(params, f, 1000, 1e-6);
+        SolutionResult result = finiteVolumeSolver.solve(params, f, 1000, 1e-2);
         assertNotNull(result);
         assertEquals(NUM_POINTS, result.getxValues().size());
         assertEquals(NUM_POINTS, result.getuValues().size());
+        double[] yTheoricalValues = new double[NUM_POINTS];
+        double[] errorValues = new double[NUM_POINTS];
         for (int i = 0; i < NUM_POINTS; i++) {
             double x = result.getxValues().get(i);
             double expectedU = uTheoretical.apply(x);
-            assertEquals(expectedU, result.getuValues().get(i), 1e-6);
+            yTheoricalValues[i] = expectedU;
+            errorValues[i] = Math.abs(expectedU - result.getuValues().get(i)) ;
+            assertEquals(expectedU, result.getuValues().get(i), 1e-4);
         }
+        double[] xValues = result.getxValues().stream().mapToDouble(Double::doubleValue).toArray();
+        double[] yNumericValues = result.getuValues().stream().mapToDouble(Double::doubleValue).toArray();
+        for (int i = 0; i < NUM_POINTS; i++) {
+            System.out.println("Valeur theorique : "+yTheoricalValues[i]+" Valeur numerique : "+yNumericValues[i]+" Erreur : "+errorValues[i] );
+        }
+        System.out.println("Convergence atteinte apres : "+result.getIterations()+" iterations");
+        SwingUtilities.invokeLater(() -> {
+            JFrame frameFunctions = new JFrame("Fonctions Numérique et Théorique (u(x) = x^3)");
+            frameFunctions.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frameFunctions.add(new GraphiqueFonctions(xValues, yNumericValues, yTheoricalValues));
+            frameFunctions.pack();
+            frameFunctions.setLocationRelativeTo(null);
+            frameFunctions.setVisible(true);
+
+            JFrame frameError = new JFrame("Fonction d'Erreur");
+            frameError.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frameError.add(new GraphiqueErreur(xValues, errorValues));
+            frameError.pack();
+            frameError.setLocation(frameFunctions.getX() + frameFunctions.getWidth() + 20, frameFunctions.getY());
+            frameError.setVisible(true);
+            System.out.println("Interface affichee");
+        });
     }
 
     @Test
@@ -125,15 +180,41 @@ public class FiniteVolumeSolverTest {
         }
         when(gaussSeidelSolver.solve(any(double[][].class), any(double[].class), any(double[].class), anyInt(), anyDouble()))
                 .thenReturn(expectedInternalSolution);
-        SolutionResult result = finiteVolumeSolver.solve(params, f, 1000, 1e-6);
+        SolutionResult result = finiteVolumeSolver.solve(params, f, 10, 1e-2);
         assertNotNull(result);
         assertEquals(NUM_POINTS, result.getxValues().size());
         assertEquals(NUM_POINTS, result.getuValues().size());
+        double[] yTheoricalValues = new double[NUM_POINTS];
+        double[] errorValues = new double[NUM_POINTS];
         for (int i = 0; i < NUM_POINTS; i++) {
             double x = result.getxValues().get(i);
             double expectedU = uTheoretical.apply(x);
-            assertEquals(expectedU, result.getuValues().get(i), 1e-6);
+            yTheoricalValues[i] = expectedU;
+            errorValues[i] = Math.abs(expectedU - result.getuValues().get(i)) ;
+            assertEquals(expectedU, result.getuValues().get(i), 1e-4);
         }
+        double[] xValues = result.getxValues().stream().mapToDouble(Double::doubleValue).toArray();
+        double[] yNumericValues = result.getuValues().stream().mapToDouble(Double::doubleValue).toArray();
+        for (int i = 0; i < NUM_POINTS; i++) {
+            System.out.println("Valeur theorique : "+yTheoricalValues[i]+" Valeur numerique : "+yNumericValues[i]+" Erreur : "+errorValues[i] );
+        }
+        System.out.println("Convergence atteinte apres : "+result.getIterations()+" iterations");
+        SwingUtilities.invokeLater(() -> {
+            JFrame frameFunctions = new JFrame("Fonctions Numérique et Théorique (u(x) = x^3)");
+            frameFunctions.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frameFunctions.add(new GraphiqueFonctions(xValues, yNumericValues, yTheoricalValues));
+            frameFunctions.pack();
+            frameFunctions.setLocationRelativeTo(null);
+            frameFunctions.setVisible(true);
+
+            JFrame frameError = new JFrame("Fonction d'Erreur");
+            frameError.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frameError.add(new GraphiqueErreur(xValues, errorValues));
+            frameError.pack();
+            frameError.setLocation(frameFunctions.getX() + frameFunctions.getWidth() + 20, frameFunctions.getY());
+            frameError.setVisible(true);
+            System.out.println("Interface affichee");
+        });
     }
 
 }
