@@ -39,8 +39,8 @@ public class EquationSolverController {
         try {
             GaussSeidelSolver gaussSeidelSolver = new GaussSeidelSolver();
             FiniteVolumeSolver finiteVolumeSolver = new FiniteVolumeSolver(gaussSeidelSolver) ;
-            Function<Double, Double> f = x -> -Math.exp(x);
-            Function<Double, Double> uTheoretical = Math::exp;
+            Function<Double, Double> f = x -> 0.0;
+            Function<Double, Double> uTheoretical = x -> x;
             SolutionResult result = finiteVolumeSolver.solve(params, f, 1000, 1e-6);
             final int NUM_POINTS = params.getNumPoints();
             double[] yTheoricalValues = new double[NUM_POINTS];
@@ -65,6 +65,7 @@ public class EquationSolverController {
                 currentMaxError = Math.max(currentMaxError, Math.abs(error));
             }
             System.out.println("L'erreur maximale est : "+ currentMaxError );
+            convergence(params,f,uTheoretical);
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException | ArithmeticException | IOException e) {
             return ResponseEntity.badRequest().body(null); // Ou un objet d'erreur plus détaillé
@@ -72,14 +73,14 @@ public class EquationSolverController {
     }
 
     public void convergence(EquationParameters params,Function<Double,Double> f,Function<Double,Double> uTheorique) throws IOException {
-        int[] nombreATester = {10,20,40,80,160,320} ;
+        int[] nombreATester = {10,20,30,40,50,60} ;
         Graphique graphique = new Graphique();
         List<Integer> nombrePoint = new ArrayList<>() ;
         List<Double> maxError = new ArrayList<>() ;
         for (int N : nombreATester) {
             System.out.println("Résolution pour N = " + N + " points internes...");
             params.setNumPoints(N);
-            SolutionResult result = solver.solve(params, f, 1000, 1e-6);
+            SolutionResult result = solver.solve(params, f, 5000, 1e-6);
             double currentMaxError = 0.0;
             List<Double> xValues = result.getxValues();
             List<Double> yNumericValues = result.getuValues();
@@ -91,7 +92,7 @@ public class EquationSolverController {
             maxError.add(currentMaxError);
             System.out.println("  Erreur max pour N=" + N + " : " + currentMaxError);
         }
-        Collections.reverse(maxError);
+        //Collections.reverse(maxError);
         graphique.generateErrorChart(nombrePoint.stream().mapToDouble(Integer::intValue).toArray(),maxError.stream().mapToDouble(Double::doubleValue).toArray(),"Convergence", 0) ;
         System.out.println("Analyse de convergence terminée. Graphique enregistré.");
 
