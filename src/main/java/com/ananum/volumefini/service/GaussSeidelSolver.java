@@ -6,17 +6,7 @@ import org.springframework.stereotype.Service;
 public class GaussSeidelSolver {
 	
 	public int nombreIterations = 0 ;
-    /**
-     * Résout un système linéaire Ax = b en utilisant la méthode de Gauss-Seidel.
-     *
-     * @param A La matrice des coefficients (doit être carrée et de taille N x N).
-     * @param b Le vecteur du second membre (taille N).
-     * @param initialGuess L'estimation initiale pour la solution x (taille N).
-     * @param maxIterations Le nombre maximal d'itérations.
-     * @param tolerance La tolérance pour la convergence.
-     * @return Le vecteur solution x.
-     * @throws IllegalArgumentException si les dimensions des matrices/vecteurs sont incompatibles.
-     */
+
     public double[] solve(double[][] A, double[] b, double[] initialGuess, int maxIterations, double tolerance) {
         if (A == null || b == null || initialGuess == null) {
             throw new IllegalArgumentException("Les entrées ne peuvent pas être nulles.");

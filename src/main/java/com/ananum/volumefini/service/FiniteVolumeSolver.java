@@ -17,16 +17,6 @@ public class FiniteVolumeSolver {
         this.gaussSeidelSolver = gaussSeidelSolver;
     }
 
-    /**
-     * Résout l'équation différentielle du second ordre 1D au''+bu'+cu=f
-     * en utilisant la méthode des volumes finis et Gauss-Seidel.
-     *
-     * @param params Les paramètres de l'équation et de la discrétisation.
-     * @param f La fonction du second membre f(x).
-     * @param maxIterations Le nombre maximal d'itérations pour Gauss-Seidel.
-     * @param tolerance La tolérance pour la convergence de Gauss-Seidel.
-     * @return Un objet SolutionResult contenant les valeurs de x et u.
-     */
     public SolutionResult solve(EquationParameters params, java.util.function.Function<Double, Double> f, int maxIterations, double tolerance) {
         double a = params.getA();
         double b = params.getB();

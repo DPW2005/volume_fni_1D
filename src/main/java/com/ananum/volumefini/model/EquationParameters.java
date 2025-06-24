@@ -7,8 +7,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class EquationParameters {
 	
 	private double a; // Coefficient de u''
