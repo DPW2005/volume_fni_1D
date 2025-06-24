@@ -10,8 +10,6 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.function.Function;
 
-import com.ananum.volumefini.model.GraphiqueErreur;
-import com.ananum.volumefini.model.GraphiqueFonctions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -79,22 +77,6 @@ public class FiniteVolumeSolverTest {
             System.out.println("Valeur theorique : "+yTheoricalValues[i]+" Valeur numerique : "+yNumericValues[i]+" Erreur : "+errorValues[i] );
         }
         System.out.println("Convergence atteinte apres : "+result.getIterations()+" iterations");
-        SwingUtilities.invokeLater(() -> {
-            JFrame frameFunctions = new JFrame("Fonctions Numérique et Théorique (u(x) = x^3)");
-            frameFunctions.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frameFunctions.add(new GraphiqueFonctions(xValues, yNumericValues, yTheoricalValues));
-            frameFunctions.pack();
-            frameFunctions.setLocationRelativeTo(null);
-            frameFunctions.setVisible(true);
-
-            JFrame frameError = new JFrame("Fonction d'Erreur");
-            frameError.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frameError.add(new GraphiqueErreur(xValues, errorValues));
-            frameError.pack();
-            frameError.setLocation(frameFunctions.getX() + frameFunctions.getWidth() + 20, frameFunctions.getY());
-            frameError.setVisible(true);
-            System.out.println("Interface affichee");
-        });
     }
 
     @Test
@@ -139,22 +121,6 @@ public class FiniteVolumeSolverTest {
             System.out.println("Valeur theorique : "+yTheoricalValues[i]+" Valeur numerique : "+yNumericValues[i]+" Erreur : "+errorValues[i] );
         }
         System.out.println("Convergence atteinte apres : "+result.getIterations()+" iterations");
-        SwingUtilities.invokeLater(() -> {
-            JFrame frameFunctions = new JFrame("Fonctions Numérique et Théorique (u(x) = x^3)");
-            frameFunctions.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frameFunctions.add(new GraphiqueFonctions(xValues, yNumericValues, yTheoricalValues));
-            frameFunctions.pack();
-            frameFunctions.setLocationRelativeTo(null);
-            frameFunctions.setVisible(true);
-
-            JFrame frameError = new JFrame("Fonction d'Erreur");
-            frameError.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frameError.add(new GraphiqueErreur(xValues, errorValues));
-            frameError.pack();
-            frameError.setLocation(frameFunctions.getX() + frameFunctions.getWidth() + 20, frameFunctions.getY());
-            frameError.setVisible(true);
-            System.out.println("Interface affichee");
-        });
     }
 
     @Test
@@ -199,22 +165,6 @@ public class FiniteVolumeSolverTest {
             System.out.println("Valeur theorique : "+yTheoricalValues[i]+" Valeur numerique : "+yNumericValues[i]+" Erreur : "+errorValues[i] );
         }
         System.out.println("Convergence atteinte apres : "+result.getIterations()+" iterations");
-        SwingUtilities.invokeLater(() -> {
-            JFrame frameFunctions = new JFrame("Fonctions Numérique et Théorique (u(x) = x^3)");
-            frameFunctions.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frameFunctions.add(new GraphiqueFonctions(xValues, yNumericValues, yTheoricalValues));
-            frameFunctions.pack();
-            frameFunctions.setLocationRelativeTo(null);
-            frameFunctions.setVisible(true);
-
-            JFrame frameError = new JFrame("Fonction d'Erreur");
-            frameError.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frameError.add(new GraphiqueErreur(xValues, errorValues));
-            frameError.pack();
-            frameError.setLocation(frameFunctions.getX() + frameFunctions.getWidth() + 20, frameFunctions.getY());
-            frameError.setVisible(true);
-            System.out.println("Interface affichee");
-        });
     }
 
 }

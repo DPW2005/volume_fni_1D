@@ -1,8 +1,7 @@
 package com.ananum.volumefini.controller;
 
-import com.ananum.volumefini.model.GraphiqueErreur;
-import com.ananum.volumefini.model.GraphiqueFonctions;
 import com.ananum.volumefini.service.GaussSeidelSolver;
+import com.ananum.volumefini.service.Graphique;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,8 +13,7 @@ import com.ananum.volumefini.model.EquationParameters;
 import com.ananum.volumefini.model.SolutionResult;
 import com.ananum.volumefini.service.FiniteVolumeSolver;
 
-import javax.swing.*;
-import java.awt.*;
+import java.io.IOException;
 import java.util.function.Function;
 
 @RestController
@@ -24,8 +22,14 @@ public class EquationSolverController {
 
     private final FiniteVolumeSolver solver;
 
-    public EquationSolverController(FiniteVolumeSolver solver) {
+    private final Graphique graphiqueFunction ;
+
+    private final Graphique graphiqueErreur ;
+
+    public EquationSolverController(FiniteVolumeSolver solver,Graphique graphiqueFunction,Graphique graphiqueErreur) {
         this.solver = solver;
+        this.graphiqueFunction = graphiqueFunction;
+        this.graphiqueErreur = graphiqueErreur;
     }
     
     @GetMapping
@@ -56,27 +60,10 @@ public class EquationSolverController {
                 System.out.println("Valeur theorique : "+yTheoricalValues[i]+" Valeur numerique : "+yNumericValues[i]+" Erreur : "+errorValues[i] );
             }
             System.out.println("Convergence atteinte apres : "+result.getIterations()+" iterations");
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    JFrame frameFunctions = new JFrame("Fonctions Numérique et Théorique (u(x) = x^3)");
-                    frameFunctions.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                    frameFunctions.add(new GraphiqueFonctions(xValues, yNumericValues, yTheoricalValues));
-                    frameFunctions.pack();
-                    frameFunctions.setLocationRelativeTo(null);
-                    frameFunctions.setVisible(true);
-
-                    JFrame frameError = new JFrame("Fonction d'Erreur");
-                    frameError.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                    frameError.add(new GraphiqueErreur(xValues, errorValues));
-                    frameError.pack();
-                    frameError.setLocation(frameFunctions.getX() + frameFunctions.getWidth() + 20, frameFunctions.getY());
-                    frameError.setVisible(true);
-                } catch (HeadlessException e) {
-                    e.printStackTrace();
-                }
-            });
+            graphiqueFunction.generateFunctionChart(xValues,yNumericValues,yTheoricalValues,"sin(pi*x)",NUM_POINTS);
+            //graphiqueErreur.generateErrorChart(xValues,errorValues,"sin(pi*x)",NUM_POINTS);
             return ResponseEntity.ok(result);
-        } catch (IllegalArgumentException | ArithmeticException e) {
+        } catch (IllegalArgumentException | ArithmeticException | IOException e) {
             return ResponseEntity.badRequest().body(null); // Ou un objet d'erreur plus détaillé
         }
     }
